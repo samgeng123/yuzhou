@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<title>宇宙种子 ·宇宙与命运模型简化版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  font-family:"PingFang SC","Microsoft YaHei",system-ui;
+  background:#020308;color:#e5e7eb;
+}
+canvas{position:fixed;left:0;top:0;}
+.ui-panel{
+  position:fixed;top:16px;left:16px;z-index:10;
+  background:rgba(10,11,30,.92);
+  padding:14px 16px;border-radius:16px;
+  backdrop-filter:blur(18px);
+  border:1px solid rgba(148,163,184,.35);
+  max-width:380px;font-size:13px;
+}
+.ui-title{font-size:16px;font-weight:600;margin-bottom:6px;}
+.ui-subtitle{font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.5;}
+.ui-row{display:flex;align-items:center;margin-bottom:8px;gap:6px;}
+.ui-row label{min-width:62px;font-size:11px;color:#d1d5db;}
+.ui-row input[type=color]{width:32px;height:22px;border-radius:999px;border:1px solid #94a3b8;background:none;}
+.ui-row select,.ui-row input[type=range]{
+  flex:1;font-size:11px;padding:4px 6px;border-radius:999px;
+  background:rgba(15,23,42,.85);color:#e5e7eb;border:1px solid rgba(148,163,184,.6);
+}
+.btn{
+  padding:4px 10px;border-radius:999px;font-size:11px;
+  background:rgba(15,23,42,.9);color:#e5e7eb;border:1px solid rgba(148,163,184,.8);
+  cursor:pointer;white-space:nowrap;
+}
+.btn.primary{background:#4c1d95;border-color:#a855f7;}
+.btn.view-toggle{background:#854d0e;border-color:#facc15;}
+.ui-buttons{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+.ui-hint{font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5;}
+.bottom-text{
+  position:fixed;right:16px;bottom:16px;font-size:11px;
+  color:#9ca3af;text-align:right;max-width:260px;pointer-events:none;
+}
+.miracle-banner{
+  position:fixed;left:50%;bottom:40px;transform:translateX(-50%);
+  padding:6px 16px;border-radius:999px;font-size:12px;
+  color:#fefce8;background:rgba(15,23,42,.96);
+  border:1px solid rgba(250,204,21,.9);opacity:0;pointer-events:none;
+  transition:opacity .35s ease,transform .35s ease;z-index:30;
+}
+.miracle-banner.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+</style>
+</head>
+
+<body>
+<canvas id="cv"></canvas>
+
+<div class="ui-panel">
+  <div class="ui-title">宇宙种子 · 命运连线 · 神迹旋转版</div>
+  <div class="ui-subtitle">
+    点与底层结构是「已定命运」，<br>
+    旋转中的宇宙，是你在不确定中连出自己的路径。
+  </div>
+
+  <div class="ui-row">
+    <label>线条颜色</label>
+    <input type="color" id="colorA" value="#a855f7">
+    <input type="color" id="colorB" value="#22d3ee">
+  </div>
+
+  <div class="ui-row">
+    <label>特效</label>
+    <select id="effect">
+      <option value="normal">普通</option>
+      <option value="glow">光晕</option>
+      <option value="dash">虚线</option>
+      <option value="pulse">脉动</option>
+      <option value="trail">渐隐轨迹</option>
+    </select>
+  </div>
+
+  <div class="ui-row">
+    <label>点密度</label>
+    <input type="range" id="density" min="40" max="180" value="90">
+  </div>
+
+  <div class="ui-row">
+    <label>旋转速度</label>
+    <input type="range" id="rotateSpeed" min="0" max="3" step="0.1" value="1.2">
+  </div>
+
+  <div class="ui-buttons">
+    <button class="btn primary" id="btnReseed">重塑宇宙种子</button>
+    <button class="btn" id="btnClear">清空线条</button>
+    <button class="btn view-toggle" id="btnView">切换到：天道视角</button>
+  </div>
+
+  <div class="ui-hint">
+    ● 左键点 → 点连线<br>
+    ● 滚轮缩放，右键/中键拖动画面<br>
+    ● 旋转速度可设为 0（完全静止）到 3（高速旋转）<br>
+    ● 连出特定图形可触发「神迹事件」
+  </div>
+</div>
+
+<div class="bottom-text">
+  <strong>确定 / 不确定：</strong><br>
+  命运结构在旋转中缓慢显露，<br>
+  而你在其中做出的每一次连接，<br>
+  都是对「已定」的不同读法。
+</div>
+
+<div id="miracle" class="miracle-banner"></div>
+
+<script>
+(() => {
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+  let W = window.innerWidth, H = window.innerHeight;
+  cv.width = W; cv.height = H;
+
+  const colorA = document.getElementById("colorA");
+  const colorB = document.getElementById("colorB");
+  const effectSel = document.getElementById("effect");
+  const density = document.getElementById("density");
+  const rotateSpeedInput = document.getElementById("rotateSpeed");
+  const btnReseed = document.getElementById("btnReseed");
+  const btnClear = document.getElementById("btnClear");
+  const btnView = document.getElementById("btnView");
+  const miracleBanner = document.getElementById("miracle");
+
+  let seed = Math.random() * 1e9;
+  let nodes = [];
+  let baseLinks = [];
+  let userLinks = [];
+  let selected = null;
+  let hover = null;
+
+  let mode = "personal";
+
+  // 缩放 + 平移
+  let zoom = 1, targetZoom = 1;
+  let offsetX = 0, offsetY = 0;
+  let isDragging = false;
+  let dragStartX = 0, dragStartY = 0;
+  let dragOriginX = 0, dragOriginY = 0;
+
+  // 旋转
+  let rotationY = 0;
+  let rotationX = 0.25;
+  let rotateSpeed = parseFloat(rotateSpeedInput.value) || 1.2;
+
+  // 天道吸引与收敛
+  let attractor = { x: 0, y: 0, z: 0 };
+  let convergence = 0;
+
+  // 弹性恢复
+  const resetSpeed = 0.18;
+
+  // 神迹
+  let activeMiracle = null;
+
+  // ===== 工具函数 =====
+  function rng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
+      return (s >>> 0)/0xffffffff;
+    };
+  }
+
+  function randomAttractor() {
+    attractor = {
+      x: (Math.random()*2-1)*0.5,
+      y: (Math.random()*2-1)*0.5,
+      z: (Math.random()*2-1)*0.5
+    };
+  }
+
+  // ===== 创建宇宙 =====
+  function createUniverse(n) {
+    let R = rng(seed);
+    nodes = [];
+    baseLinks = [];
+    userLinks = [];
+    selected = null;
+    hover = null;
+
+    for (let i = 0; i < n; i++) {
+      const u = R(), v = R();
+      const theta = u * Math.PI * 2;
+      const phi = Math.acos(2*v-1);
+      const r = 0.5 + R()*0.5;
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+
+      nodes.push({
+        x,y,z,
+        ox:x,oy:y,oz:z,
+        sx:0,sy:0,d:1,size:1
+      });
+    }
+
+    const baseCount = Math.floor(n * 0.35);
+    for (let i = 0; i < baseCount; i++) {
+      let a = Math.floor(R()*n);
+      let b = Math.floor(R()*n);
+      if (a !== b) baseLinks.push([a,b]);
+    }
+
+    randomAttractor();
+  }
+
+  // 统一 3D → 2D 投影（带旋转）
+  function projectPoint(x, y, z) {
+    const base = Math.min(W, H)*0.42;
+    const cameraZ = 900;
+
+    let px = x * base;
+    let py = y * base;
+    let pz = z * base;
+
+    const cosY = Math.cos(rotationY);
+    const sinY = Math.sin(rotationY);
+    const cosX = Math.cos(rotationX);
+    const sinX = Math.sin(rotationX);
+
+    // Y 轴
+    let rx = px * cosY - pz * sinY;
+    let rzY = px * sinY + pz * cosY;
+    // X 轴
+    let ry = py * cosX - rzY * sinX;
+    let rz = py * sinX + rzY * cosX;
+
+    const zc = cameraZ + rz;
+    const p = cameraZ/(zc || 1);
+
+    return { x: rx*p, y: ry*p, p };
+  }
+
+  // ===== 更新节点（天道吸引 + 弹性恢复）=====
+  function updateNodes() {
+    let totalDist = 0;
+
+    for (let n of nodes) {
+      if (mode === "dao") {
+        const dx = attractor.x - n.x;
+        const dy = attractor.y - n.y;
+        const dz = attractor.z - n.z;
+        const step = 0.02 + Math.random()*0.04;
+        n.x += dx * step;
+        n.y += dy * step;
+        n.z += dz * step;
+        totalDist += Math.sqrt(dx*dx+dy*dy+dz*dz);
+      } else {
+        // 弹性恢复到原始混乱位置
+        n.x += (n.ox - n.x) * resetSpeed;
+        n.y += (n.oy - n.y) * resetSpeed;
+        n.z += (n.oz - n.z) * resetSpeed;
+        // 轻微随机扰动
+        n.x += (Math.random()-0.5)*0.002;
+        n.y += (Math.random()-0.5)*0.002;
+        n.z += (Math.random()-0.5)*0.002;
+      }
+
+      let p = projectPoint(n.x, n.y, n.z);
+      n.sx = (p.x + offsetX)*zoom + W/2;
+      n.sy = (p.y + offsetY)*zoom + H/2;
+      n.d = p.p;
+      n.size = 2 + p.p*2;
+    }
+
+    if (mode === "dao") {
+      const avg = totalDist / (nodes.length || 1);
+      convergence = Math.min(1, Math.max(0, 1 - avg/0.6));
+    } else convergence = 0;
+  }
+
+  // ===== 绘制 =====
+  function drawBackground() {
+    const g = ctx.createRadialGradient(
+      W/2, H*0.2, Math.min(W,H)*0.1,
+      W/2, H*0.8, Math.max(W,H)
+    );
+    g.addColorStop(0,"#111827");
+    g.addColorStop(0.4,"#020617");
+    g.addColorStop(1,"#020012");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    if (mode === "dao") {
+      const g2 = ctx.createRadialGradient(
+        W/2, H/2, Math.min(W,H)*0.1,
+        W/2, H/2, Math.max(W,H)*0.9
+      );
+      g2.addColorStop(0,"rgba(252,211,77,.28)");
+      g2.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  function drawLinks() {
+    ctx.save();
+    ctx.lineCap = "round";
+
+    // 底层宿命线
+    for (let [a,b] of baseLinks) {
+      const n1 = nodes[a], n2 = nodes[b];
+      ctx.globalAlpha = 0.14 * n1.d;
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(n1.sx, n1.sy);
+      ctx.lineTo(n2.sx, n2.sy);
+      ctx.stroke();
+    }
+
+    // 玩家连线
+    for (let l of userLinks) {
+      const n1 = nodes[l.a], n2 = nodes[l.b];
+      let c = l.color;
+      if (mode === "dao") c = "rgba(252,211,77,.95)";
+
+      ctx.globalAlpha = 0.9;
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+
+      if (l.effect === "glow") {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = c;
+      } else if (l.effect === "dash") {
+        ctx.setLineDash([4,7]);
+      } else if (l.effect === "pulse") {
+        const t = performance.now()*0.003;
+        ctx.lineWidth = 1.6 + Math.sin(t + l.a*0.7)*1.2;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = c;
+      } else if (l.effect === "trail") {
+        const age = (performance.now()-l.t)/1000;
+        ctx.globalAlpha = Math.max(0.2, 1-age*0.2);
+      }
+
+      ctx.strokeStyle = c;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(n1.sx, n1.sy);
+      ctx.lineTo(n2.sx, n2.sy);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawNodes() {
+    for (let n of nodes) {
+      let r = n.size;
+      let alpha = 0.2 + n.d*0.4;
+
+      if (hover === n || selected === n) {
+        r *= 1.4;
+        alpha = 1;
+      }
+
+      ctx.globalAlpha = alpha;
+
+      // 外环
+      ctx.beginPath();
+      ctx.arc(n.sx, n.sy, r*1.3, 0, Math.PI*2);
+      ctx.strokeStyle = mode === "dao" ? "#facc15" : "#64748b";
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+
+      // 内核
+      const g = ctx.createRadialGradient(
+        n.sx - r*0.4, n.sy - r*0.4, r*0.1,
+        n.sx, n.sy, r
+      );
+      g.addColorStop(0,"#f9fafb");
+      g.addColorStop(1, mode === "dao" ? "#facc15" : "#334155");
+
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(n.sx, n.sy, r, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawDaoGuide() {
+    const p = projectPoint(attractor.x, attractor.y, attractor.z);
+    const ax = (p.x + offsetX)*zoom + W/2;
+    const ay = (p.y + offsetY)*zoom + H/2;
+
+    ctx.save();
+    ctx.setLineDash([8,8]);
+    ctx.strokeStyle = "rgba(250,250,210,.9)";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(W/2, H/2);
+    ctx.lineTo(ax, ay);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawFatePattern() {
+    if (mode !== "dao" || convergence < 0.3) return;
+    ctx.save();
+    ctx.translate(W/2, H/2);
+
+    const R = Math.min(W,H)*0.25*convergence;
+    ctx.strokeStyle = `rgba(255,230,150,${0.3+0.5*convergence})`;
+    ctx.lineWidth = 1.3;
+
+    ctx.beginPath();
+    ctx.arc(0,0,R,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (let i=0;i<6;i++){
+      const a = i*Math.PI/3;
+      const x = R*Math.cos(a), y = R*Math.sin(a);
+      if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawDaoGeometry() {
+    if (mode !== "dao" || convergence < 0.7) return;
+    ctx.save();
+    ctx.translate(W/2, H/2);
+
+    const t = performance.now()*0.001;
+    const R = Math.min(W,H)*0.1;
+
+    ctx.strokeStyle = `rgba(255,255,200,${0.5+0.4*convergence})`;
+    ctx.lineWidth = 1.5;
+
+    ctx.save();
+    ctx.rotate(t*0.7);
+    ctx.beginPath();
+    for (let i=0;i<3;i++){
+      const a = i*2*Math.PI/3;
+      const x = R*Math.cos(a), y = R*Math.sin(a);
+      if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+
+    for (let k=1;k<=3;k++){
+      ctx.beginPath();
+      ctx.arc(0,0,R*k*0.75,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(255,245,200,${0.15+0.1*k})`;
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawMiracleOverlay() {
+    if (!activeMiracle) return;
+    const age = (performance.now()-activeMiracle.start)/1000;
+    if (age>4){ activeMiracle=null; return; }
+
+    const s = Math.max(0,1-age/4);
+    ctx.save();
+    const g = ctx.createRadialGradient(
+      W/2,H/2,Math.min(W,H)*0.1,
+      W/2,H/2,Math.max(W,H)
+    );
+    g.addColorStop(0,`rgba(255,255,255,${0.2*s})`);
+    g.addColorStop(0.3,`rgba(252,211,77,${0.4*s})`);
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+  }
+
+  // ===== 神迹事件 =====
+  function triggerMiracle(type){
+    let msg="";
+    if (type==="triangle") msg="神迹事件：三界合一 · 天人相应";
+    else if (type==="hexagon") msg="神迹事件：六芒命运星 · 命运显现";
+    else if (type==="circle") msg="神迹事件：轮回之环 · 心魂觉醒";
+    else msg="神迹事件：命运结构被短暂显露";
+
+    miracleBanner.textContent = msg;
+    miracleBanner.classList.add("show");
+    setTimeout(()=>miracleBanner.classList.remove("show"),3800);
+    activeMiracle = { type, start: performance.now() };
+  }
+
+  function detectMiracle(){
+    if (userLinks.length<3) return;
+
+    // 邻接表
+    const adj = {};
+    for (let l of userLinks){
+      if (!adj[l.a]) adj[l.a] = new Set();
+      if (!adj[l.b]) adj[l.b] = new Set();
+      adj[l.a].add(l.b);
+      adj[l.b].add(l.a);
+    }
+    const edges = userLinks.map(l=>[l.a,l.b]);
+    const hasEdge = (u,v)=>adj[u] && adj[u].has(v);
+
+    // 三角形
+    for (let [a,b] of edges){
+      for (let [c1,c2] of edges){
+        const c = c1===a ? c2 : (c2===a ? c1 : null);
+        if (c==null) continue;
+        if (a!==b && b!==c && a!==c && hasEdge(b,c)){
+          triggerMiracle("triangle");
+          return;
+        }
+      }
+    }
+
+    // 环（六芒 / 圆）
+    let foundLen = null;
+    function dfs(start, cur, depth, path){
+      if (depth>7) return false;
+      for (let nb of (adj[cur]||[])){
+        if (nb===start && depth>=5){
+          foundLen = depth+1;
+          return true;
+        }
+        if (path.includes(nb)) continue;
+        if (dfs(start, nb, depth+1, [...path, nb])) return true;
+      }
+      return false;
+    }
+    for (let s of Object.keys(adj)){
+      if (dfs(+s,+s,0,[+s])) break;
+    }
+    if (foundLen){
+      if (foundLen>=6 && foundLen<=7) triggerMiracle("hexagon");
+      else if (foundLen>=8) triggerMiracle("circle");
+    }
+  }
+
+  // ===== 交互 =====
+  cv.addEventListener("mousemove", e=>{
+    const mx = e.clientX, my = e.clientY;
+    let best=null,bestD=99999;
+    for (let n of nodes){
+      const dx = n.sx-mx, dy=n.sy-my;
+      const d = dx*dx+dy*dy;
+      if (d<200 && d<bestD){ bestD=d; best=n; }
+    }
+    hover = best;
+
+    if (isDragging){
+      offsetX = dragOriginX + (e.clientX-dragStartX)/zoom;
+      offsetY = dragOriginY + (e.clientY-dragStartY)/zoom;
+    }
+  });
+
+  cv.addEventListener("mousedown", e=>{
+    if (e.button===1 || e.button===2){
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      dragOriginX = offsetX;
+      dragOriginY = offsetY;
+      e.preventDefault();
+    }
+  });
+  cv.addEventListener("mouseup", ()=>{ isDragging=false; });
+  cv.addEventListener("contextmenu", e=>e.preventDefault());
+
+  cv.addEventListener("wheel", e=>{
+    e.preventDefault();
+    const factor = Math.exp(-e.deltaY*0.001);
+    targetZoom = Math.max(0.5, Math.min(4, targetZoom*factor));
+  }, {passive:false});
+
+  cv.addEventListener("click", e=>{
+    if (e.button!==0) return;
+    const mx=e.clientX, my=e.clientY;
+
+    let hit=null,bestD=99999;
+    for (let n of nodes){
+      const dx=n.sx-mx, dy=n.sy-my;
+      const d=dx*dx+dy*dy;
+      if (d<200 && d<bestD){bestD=d;hit=n;}
+    }
+
+    if (!hit){ selected=null; return; }
+
+    if (!selected) {
+      selected = hit;
+    } else if (selected === hit) {
+      selected = null;
+    } else {
+      const col = Math.random()<0.5 ? colorA.value : colorB.value;
+      userLinks.push({
+        a:nodes.indexOf(selected),
+        b:nodes.indexOf(hit),
+        color:col,
+        effect:effectSel.value,
+        t:performance.now()
+      });
+      detectMiracle();
+      selected = hit;
+    }
+  });
+
+  rotateSpeedInput.oninput = ()=>{
+    rotateSpeed = parseFloat(rotateSpeedInput.value)||0;
+  };
+
+  btnReseed.onclick = ()=>{
+    seed = Math.random()*1e9;
+    createUniverse(+density.value);
+  };
+  btnClear.onclick = ()=>{ userLinks = []; };
+  density.oninput = ()=>{ createUniverse(+density.value); };
+  btnView.onclick = ()=>{
+    if (mode==="personal"){
+      mode="dao";
+      randomAttractor();
+      btnView.textContent="切换到：个人视角";
+    }else{
+      mode="personal";
+      btnView.textContent="切换到：天道视角";
+    }
+  };
+
+  // ===== 主循环 =====
+  let last = performance.now();
+  function loop(){
+    const now = performance.now();
+    let dt = (now-last)/16.666; // 帧数归一
+    if (dt>3) dt=3;
+    last = now;
+
+    // 平滑缩放
+    zoom += (targetZoom-zoom)*0.15*dt;
+
+    // 旋转（速度可控）
+    rotationY += 0.015*rotateSpeed*dt;
+    rotationX = 0.25 + Math.sin(now*0.0004)*0.2*(rotateSpeed>0?1:0.2);
+
+    updateNodes();
+    drawBackground();
+    drawLinks();
+    drawNodes();
+    if (mode==="dao") drawDaoGuide();
+    drawFatePattern();
+    drawDaoGeometry();
+    drawMiracleOverlay();
+
+    requestAnimationFrame(loop);
+  }
+
+  createUniverse(+density.value);
+  loop();
+
+  window.addEventListener("resize", ()=>{
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = W; cv.height = H;
+  });
+})();
+</script>
+</body>
+</html>
