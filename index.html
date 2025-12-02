@@ -14,7 +14,8 @@ canvas{position:fixed;left:0;top:0;}
 .ui-panel{
   position:fixed;top:16px;left:16px;z-index:10;
   background:rgba(10,11,30,.92);
-  padding:14px 16px;border-radius:16px;
+  padding:12px 14px;border-radius:18px;
+  box-shadow:0 18px 45px rgba(15,23,42,.85);
   backdrop-filter:blur(18px);
   border:1px solid rgba(148,163,184,.35);
   max-width:380px;font-size:13px;
@@ -30,46 +31,63 @@ canvas{position:fixed;left:0;top:0;}
 }
 .btn{
   padding:4px 10px;border-radius:999px;font-size:11px;
-  background:rgba(15,23,42,.9);color:#e5e7eb;border:1px solid rgba(148,163,184,.8);
-  cursor:pointer;white-space:nowrap;
+  border:1px solid rgba(148,163,184,.6);
+  background:linear-gradient(135deg,#0f172a,#020617);
+  color:#e5e7eb;cursor:pointer;transition:.18s;
 }
-.btn.primary{background:#4c1d95;border-color:#a855f7;}
-.btn.view-toggle{background:#854d0e;border-color:#facc15;}
-.ui-buttons{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
-.ui-hint{font-size:10px;color:#9ca3af;margin-top:6px;line-height:1.5;}
+.btn:hover{background:linear-gradient(135deg,#111827,#020617);border-color:#eab308;}
+.btn-ghost{
+  background:rgba(15,23,42,.6);
+}
 .bottom-text{
   position:fixed;right:16px;bottom:16px;font-size:11px;
   color:#9ca3af;text-align:right;max-width:260px;pointer-events:none;
 }
+
+@media (max-width: 768px){
+  .ui-panel{
+    max-width:92%;
+    left:10px;
+    right:10px;
+    top:10px;
+  }
+  .ui-row{
+    flex-wrap:wrap;
+  }
+  .bottom-text{
+    display:none;
+  }
+}
+
 .miracle-banner{
   position:fixed;left:50%;bottom:40px;transform:translateX(-50%);
-  padding:6px 16px;border-radius:999px;font-size:12px;
-  color:#fefce8;background:rgba(15,23,42,.96);
-  border:1px solid rgba(250,204,21,.9);opacity:0;pointer-events:none;
-  transition:opacity .35s ease,transform .35s ease;z-index:30;
+  padding:6px 16px;border-radius:999px;
+  background:linear-gradient(135deg,rgba(252,211,77,.1),rgba(251,191,36,.08));
+  border:1px solid rgba(250,204,21,.8);
+  color:#facc15;font-size:12px;
+  box-shadow:0 12px 35px rgba(250,204,21,.4);
+  opacity:0;pointer-events:none;transition:.35s;
 }
 .miracle-banner.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
 </style>
 </head>
-
 <body>
 <canvas id="cv"></canvas>
 
 <div class="ui-panel">
-  <div class="ui-title">宇宙种子 · 命运连线 · 神迹旋转版</div>
+  <div class="ui-title">宇宙种子 · 命运连线</div>
   <div class="ui-subtitle">
-    点与底层结构是「已定命运」，<br>
-    旋转中的宇宙，是你在不确定中连出自己的路径。
+    点与线只是表象，你连出的，是自己在「确定 / 不确定」之间做出的选择。
   </div>
 
   <div class="ui-row">
     <label>线条颜色</label>
-    <input type="color" id="colorA" value="#a855f7">
-    <input type="color" id="colorB" value="#22d3ee">
+    <input type="color" id="colorA" value="#facc15">
+    <input type="color" id="colorB" value="#38bdf8">
   </div>
 
   <div class="ui-row">
-    <label>特效</label>
+    <label>线条特效</label>
     <select id="effect">
       <option value="normal">普通</option>
       <option value="glow">光晕</option>
@@ -81,33 +99,24 @@ canvas{position:fixed;left:0;top:0;}
 
   <div class="ui-row">
     <label>点密度</label>
-    <input type="range" id="density" min="40" max="180" value="90">
+    <input type="range" id="density" min="50" max="360" value="200">
   </div>
 
   <div class="ui-row">
     <label>旋转速度</label>
-    <input type="range" id="rotateSpeed" min="0" max="3" step="0.1" value="1.2">
+    <input type="range" id="rotateSpeed" min="-2" max="2" step="0.05" value="0.9">
   </div>
 
-  <div class="ui-buttons">
-    <button class="btn primary" id="btnReseed">重塑宇宙种子</button>
-    <button class="btn" id="btnClear">清空线条</button>
-    <button class="btn view-toggle" id="btnView">切换到：天道视角</button>
-  </div>
-
-  <div class="ui-hint">
-    ● 左键点 → 点连线<br>
-    ● 滚轮缩放，右键/中键拖动画面<br>
-    ● 旋转速度可设为 0（完全静止）到 3（高速旋转）<br>
-    ● 连出特定图形可触发「神迹事件」
+  <div class="ui-row" style="justify-content:space-between;margin-top:6px;">
+    <button class="btn" id="btnView">切换到：天道视角</button>
+    <button class="btn btn-ghost" id="btnReseed">重塑宇宙种子</button>
+    <button class="btn btn-ghost" id="btnClear">清空线条</button>
   </div>
 </div>
 
 <div class="bottom-text">
-  <strong>确定 / 不确定：</strong><br>
-  命运结构在旋转中缓慢显露，<br>
-  而你在其中做出的每一次连接，<br>
-  都是对「已定」的不同读法。
+  鼠标 / 手指点选两个点即可连线。<br>
+  天道视角下，会出现「虚线引导」，将所有点收敛到临时命运吸引点，显现「命运花纹」与「天道几何结构」。
 </div>
 
 <div id="miracle" class="miracle-banner"></div>
@@ -129,6 +138,10 @@ canvas{position:fixed;left:0;top:0;}
   const btnView = document.getElementById("btnView");
   const miracleBanner = document.getElementById("miracle");
 
+  const isMobile =
+    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    window.innerWidth < 800;
+
   let seed = Math.random() * 1e9;
   let nodes = [];
   let baseLinks = [];
@@ -145,6 +158,12 @@ canvas{position:fixed;left:0;top:0;}
   let dragStartX = 0, dragStartY = 0;
   let dragOriginX = 0, dragOriginY = 0;
 
+  // 触控辅助
+  let touchStartDist = 0;
+  let touchStartZoom = 1;
+  let lastTouchCenter = null;
+  let touchTapInfo = null;
+
   // 旋转
   let rotationY = 0;
   let rotationX = 0.25;
@@ -160,24 +179,80 @@ canvas{position:fixed;left:0;top:0;}
   // 神迹
   let activeMiracle = null;
 
+  // 本地存储
+  const STORAGE_KEY = "universe_model_state_v1";
+  let loadedState = null;
+
+  function saveState() {
+    try {
+      const state = {
+        seed,
+        density: density.value,
+        colorA: colorA.value,
+        colorB: colorB.value,
+        effect: effectSel.value,
+        rotateSpeed,
+        mode,
+        userLinks: userLinks.map(l => ({
+          a: l.a,
+          b: l.b,
+          color: l.color,
+          effect: l.effect
+        }))
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn("保存状态失败", e);
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const st = JSON.parse(raw);
+      if (st.seed != null) seed = st.seed;
+      if (st.density != null) density.value = st.density;
+      if (st.colorA) colorA.value = st.colorA;
+      if (st.colorB) colorB.value = st.colorB;
+      if (st.effect) effectSel.value = st.effect;
+      if (st.rotateSpeed != null) {
+        rotateSpeed = st.rotateSpeed;
+        rotateSpeedInput.value = st.rotateSpeed;
+      }
+      if (st.mode) mode = st.mode;
+      loadedState = st;
+
+      // 同步视角按钮文字
+      btnView.textContent = mode === "dao"
+        ? "切换到：个人视角"
+        : "切换到：天道视角";
+    } catch (e) {
+      console.warn("读取状态失败", e);
+    }
+  }
+
   // ===== 工具函数 =====
   function rng(seed) {
     let s = seed >>> 0;
     return () => {
       s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
-      return (s >>> 0)/0xffffffff;
+      return (s >>> 0) / 0xffffffff;
     };
   }
 
   function randomAttractor() {
-    attractor = {
-      x: (Math.random()*2-1)*0.5,
-      y: (Math.random()*2-1)*0.5,
-      z: (Math.random()*2-1)*0.5
-    };
+    const R = rng(seed + 1234567);
+    const u = R(), v = R();
+    const theta = u * Math.PI * 2;
+    const phi = Math.acos(2 * v - 1);
+    const r = 0.2 + R()*0.3;
+    attractor.x = r * Math.sin(phi) * Math.cos(theta);
+    attractor.y = r * Math.sin(phi) * Math.sin(theta);
+    attractor.z = r * Math.cos(phi);
   }
 
-  // ===== 创建宇宙 =====
+  // ===== 创建宇宙点阵与基础结构 =====
   function createUniverse(n) {
     let R = rng(seed);
     nodes = [];
@@ -226,20 +301,21 @@ canvas{position:fixed;left:0;top:0;}
     const cosX = Math.cos(rotationX);
     const sinX = Math.sin(rotationX);
 
-    // Y 轴
+    // Y 轴旋转
     let rx = px * cosY - pz * sinY;
     let rzY = px * sinY + pz * cosY;
-    // X 轴
+
+    // X 轴旋转
     let ry = py * cosX - rzY * sinX;
     let rz = py * sinX + rzY * cosX;
 
-    const zc = cameraZ + rz;
-    const p = cameraZ/(zc || 1);
-
-    return { x: rx*p, y: ry*p, p };
+    const p = cameraZ / (cameraZ - rz);
+    const sx = rx * p;
+    const sy = ry * p;
+    return { x:sx, y:sy, p };
   }
 
-  // ===== 更新节点（天道吸引 + 弹性恢复）=====
+  // 更新节点（天道吸引 + 弹性恢复）
   function updateNodes() {
     let totalDist = 0;
 
@@ -284,46 +360,48 @@ canvas{position:fixed;left:0;top:0;}
       W/2, H*0.8, Math.max(W,H)
     );
     g.addColorStop(0,"#111827");
-    g.addColorStop(0.4,"#020617");
-    g.addColorStop(1,"#020012");
+    g.addColorStop(0.35,"#020617");
+    g.addColorStop(1,"#000000");
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
-    if (mode === "dao") {
-      const g2 = ctx.createRadialGradient(
-        W/2, H/2, Math.min(W,H)*0.1,
-        W/2, H/2, Math.max(W,H)*0.9
-      );
-      g2.addColorStop(0,"rgba(252,211,77,.28)");
-      g2.addColorStop(1,"rgba(0,0,0,0)");
-      ctx.fillStyle = g2;
-      ctx.fillRect(0,0,W,H);
+    // 轻微星尘
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.fillStyle = "#e5e7eb";
+    for (let i=0;i<70;i++){
+      const x = (i*97 % W);
+      const y = (i*53 % H);
+      ctx.fillRect(x,y,1,1);
     }
+    ctx.restore();
   }
 
-  function drawLinks() {
+  function drawBaseStructure() {
     ctx.save();
-    ctx.lineCap = "round";
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = "rgba(148,163,184,0.45)";
+    ctx.globalAlpha = 0.55;
 
-    // 底层宿命线
     for (let [a,b] of baseLinks) {
       const n1 = nodes[a], n2 = nodes[b];
-      ctx.globalAlpha = 0.14 * n1.d;
-      ctx.strokeStyle = "#475569";
-      ctx.lineWidth = 0.7;
+      if (!n1 || !n2) continue;
       ctx.beginPath();
       ctx.moveTo(n1.sx, n1.sy);
       ctx.lineTo(n2.sx, n2.sy);
       ctx.stroke();
     }
+    ctx.restore();
+  }
 
-    // 玩家连线
+  function drawUserLinks() {
+    ctx.save();
     for (let l of userLinks) {
       const n1 = nodes[l.a], n2 = nodes[l.b];
-      let c = l.color;
-      if (mode === "dao") c = "rgba(252,211,77,.95)";
+      if (!n1 || !n2) continue;
 
-      ctx.globalAlpha = 0.9;
+      let c = l.color || "#facc15";
+      ctx.globalAlpha = 0.92;
       ctx.setLineDash([]);
       ctx.shadowBlur = 0;
 
@@ -367,67 +445,96 @@ canvas{position:fixed;left:0;top:0;}
 
       // 外环
       ctx.beginPath();
-      ctx.arc(n.sx, n.sy, r*1.3, 0, Math.PI*2);
-      ctx.strokeStyle = mode === "dao" ? "#facc15" : "#64748b";
-      ctx.lineWidth = 0.7;
+      ctx.arc(
+        n.sx, n.sy,
+        r*1.4, 0, Math.PI*2
+      );
+      ctx.strokeStyle = "rgba(148,163,184,0.35)";
+      ctx.lineWidth = 0.8;
       ctx.stroke();
 
       // 内核
       const g = ctx.createRadialGradient(
-        n.sx - r*0.4, n.sy - r*0.4, r*0.1,
-        n.sx, n.sy, r
+        n.sx, n.sy, 0,
+        n.sx, n.sy, r*1.6
       );
       g.addColorStop(0,"#f9fafb");
-      g.addColorStop(1, mode === "dao" ? "#facc15" : "#334155");
-
+      g.addColorStop(0.45,"#facc15");
+      g.addColorStop(1,"rgba(6,182,212,0)");
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(n.sx, n.sy, r, 0, Math.PI*2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
+  // 天道视角：虚线引导
   function drawDaoGuide() {
-    const p = projectPoint(attractor.x, attractor.y, attractor.z);
-    const ax = (p.x + offsetX)*zoom + W/2;
-    const ay = (p.y + offsetY)*zoom + H/2;
-
+    if (mode !== "dao") return;
     ctx.save();
-    ctx.setLineDash([8,8]);
-    ctx.strokeStyle = "rgba(250,250,210,.9)";
-    ctx.lineWidth = 1.3;
+    ctx.setLineDash([3,6]);
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = "rgba(252,211,77,0.65)";
+    ctx.globalAlpha = 0.55+0.3*convergence;
+
+    const ap = projectPoint(attractor.x, attractor.y, attractor.z);
+    const ax = (ap.x + offsetX)*zoom + W/2;
+    const ay = (ap.y + offsetY)*zoom + H/2;
+
+    for (let n of nodes) {
+      ctx.beginPath();
+      ctx.moveTo(n.sx, n.sy);
+      ctx.lineTo(ax, ay);
+      ctx.stroke();
+    }
+
+    // 吸引点本身
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    const R = 11 + 10*convergence;
+    const g = ctx.createRadialGradient(ax,ay,0, ax,ay,R*1.4);
+    g.addColorStop(0,"rgba(250,250,250,1)");
+    g.addColorStop(0.4,"rgba(250,204,21,1)");
+    g.addColorStop(1,"rgba(249,250,251,0)");
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(W/2, H/2);
-    ctx.lineTo(ax, ay);
-    ctx.stroke();
+    ctx.arc(ax, ay, R, 0, Math.PI*2);
+    ctx.fill();
+
     ctx.restore();
   }
 
+  // 命运花纹：收敛后的几何纹理
   function drawFatePattern() {
-    if (mode !== "dao" || convergence < 0.3) return;
+    if (convergence < 0.3) return;
     ctx.save();
+    ctx.globalAlpha = 0.12 + convergence*0.18;
     ctx.translate(W/2, H/2);
 
-    const R = Math.min(W,H)*0.25*convergence;
-    ctx.strokeStyle = `rgba(255,230,150,${0.3+0.5*convergence})`;
-    ctx.lineWidth = 1.3;
+    const t = performance.now()*0.0006;
+    const baseR = Math.min(W,H)*0.22 * (0.7 + 0.4*convergence);
 
-    ctx.beginPath();
-    ctx.arc(0,0,R,0,Math.PI*2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    for (let i=0;i<6;i++){
-      const a = i*Math.PI/3;
-      const x = R*Math.cos(a), y = R*Math.sin(a);
-      if (!i) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    for (let ring=0; ring<3; ring++){
+      const r = baseR*(0.6 + ring*0.3);
+      const points = 6 + ring*2;
+      ctx.beginPath();
+      for (let i=0;i<points;i++){
+        const ang = t*2 + i*2*Math.PI/points + ring*0.3;
+        const x = r*Math.cos(ang);
+        const y = r*Math.sin(ang);
+        i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(250,204,21,${0.35 + ring*0.12})`;
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
 
     ctx.restore();
   }
 
+  // 天道几何结构（佛界透视的金色几何）
   function drawDaoGeometry() {
     if (mode !== "dao" || convergence < 0.7) return;
     ctx.save();
@@ -483,10 +590,10 @@ canvas{position:fixed;left:0;top:0;}
   // ===== 神迹事件 =====
   function triggerMiracle(type){
     let msg="";
-    if (type==="triangle") msg="神迹事件：三界合一 · 天人相应";
-    else if (type==="hexagon") msg="神迹事件：六芒命运星 · 命运显现";
-    else if (type==="circle") msg="神迹事件：轮回之环 · 心魂觉醒";
-    else msg="神迹事件：命运结构被短暂显露";
+    if (type==="triangle") msg="三界合一 · 天人相应";
+    else if (type==="hexagon") msg="确定与不确定并存 · 命运显现";
+    else if (type==="circle") msg="轮回之环 · 觉醒";
+    else msg="命运结构被短暂显露";
 
     miracleBanner.textContent = msg;
     miracleBanner.classList.add("show");
@@ -512,114 +619,233 @@ canvas{position:fixed;left:0;top:0;}
     for (let [a,b] of edges){
       for (let [c1,c2] of edges){
         const c = c1===a ? c2 : (c2===a ? c1 : null);
-        if (c==null) continue;
-        if (a!==b && b!==c && a!==c && hasEdge(b,c)){
+        if (c==null || c===b) continue;
+        if (hasEdge(b,c)){
           triggerMiracle("triangle");
           return;
         }
       }
     }
 
-    // 环（六芒 / 圆）
-    let foundLen = null;
-    function dfs(start, cur, depth, path){
-      if (depth>7) return false;
-      for (let nb of (adj[cur]||[])){
-        if (nb===start && depth>=5){
-          foundLen = depth+1;
-          return true;
+    // 简单六边形（长度为 6 的闭环）
+    function hasCycleOfLength(start, length){
+      const visited = new Set();
+      function dfs(curr, prev, depth, path){
+        if (depth===length){
+          if (hasEdge(curr,start)) return true;
+          return false;
         }
-        if (path.includes(nb)) continue;
-        if (dfs(start, nb, depth+1, [...path, nb])) return true;
+        visited.add(curr);
+        if (!adj[curr]) return false;
+        for (let nb of adj[curr]){
+          if (nb===prev) continue;
+          if (visited.has(nb)) continue;
+          if (dfs(start, nb, depth+1, [...path, nb])) return true;
+        }
+        return false;
       }
-      return false;
+      return dfs(start, -1, 1, [start]);
     }
     for (let s of Object.keys(adj)){
-      if (dfs(+s,+s,0,[+s])) break;
+      if (hasCycleOfLength(+s,6)){
+        triggerMiracle("hexagon");
+        return;
+      }
     }
-    if (foundLen){
-      if (foundLen>=6 && foundLen<=7) triggerMiracle("hexagon");
-      else if (foundLen>=8) triggerMiracle("circle");
+
+    // 环状：当用户联出的线形成一个较大“环”
+    let sumLen = 0;
+    for (let l of userLinks){
+      const n1 = nodes[l.a], n2 = nodes[l.b];
+      const dx = n1.sx-n2.sx, dy=n1.sy-n2.sy;
+      sumLen += Math.sqrt(dx*dx+dy*dy);
+    }
+    const avgLen = sumLen/(userLinks.length||1);
+    if (userLinks.length>12 && avgLen>60){
+      triggerMiracle("circle");
     }
   }
 
   // ===== 交互 =====
-  cv.addEventListener("mousemove", e=>{
-    const mx = e.clientX, my = e.clientY;
-    let best=null,bestD=99999;
-    for (let n of nodes){
-      const dx = n.sx-mx, dy=n.sy-my;
-      const d = dx*dx+dy*dy;
-      if (d<200 && d<bestD){ bestD=d; best=n; }
+  function handlePointSelection(mx, my, radius) {
+    let hit = null, bestD = Infinity;
+    const maxD = radius * radius;
+    for (let n of nodes) {
+      const dx = n.sx - mx;
+      const dy = n.sy - my;
+      const d = dx*dx + dy*dy;
+      if (d < maxD && d < bestD) {
+        bestD = d;
+        hit = n;
+      }
     }
-    hover = best;
-
-    if (isDragging){
-      offsetX = dragOriginX + (e.clientX-dragStartX)/zoom;
-      offsetY = dragOriginY + (e.clientY-dragStartY)/zoom;
+    if (!hit) {
+      selected = null;
+      return;
     }
-  });
-
-  cv.addEventListener("mousedown", e=>{
-    if (e.button===1 || e.button===2){
-      isDragging = true;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      dragOriginX = offsetX;
-      dragOriginY = offsetY;
-      e.preventDefault();
-    }
-  });
-  cv.addEventListener("mouseup", ()=>{ isDragging=false; });
-  cv.addEventListener("contextmenu", e=>e.preventDefault());
-
-  cv.addEventListener("wheel", e=>{
-    e.preventDefault();
-    const factor = Math.exp(-e.deltaY*0.001);
-    targetZoom = Math.max(0.5, Math.min(4, targetZoom*factor));
-  }, {passive:false});
-
-  cv.addEventListener("click", e=>{
-    if (e.button!==0) return;
-    const mx=e.clientX, my=e.clientY;
-
-    let hit=null,bestD=99999;
-    for (let n of nodes){
-      const dx=n.sx-mx, dy=n.sy-my;
-      const d=dx*dx+dy*dy;
-      if (d<200 && d<bestD){bestD=d;hit=n;}
-    }
-
-    if (!hit){ selected=null; return; }
-
     if (!selected) {
       selected = hit;
     } else if (selected === hit) {
       selected = null;
     } else {
-      const col = Math.random()<0.5 ? colorA.value : colorB.value;
+      const col = Math.random() < 0.5 ? colorA.value : colorB.value;
       userLinks.push({
-        a:nodes.indexOf(selected),
-        b:nodes.indexOf(hit),
-        color:col,
-        effect:effectSel.value,
-        t:performance.now()
+        a: nodes.indexOf(selected),
+        b: nodes.indexOf(hit),
+        color: col,
+        effect: effectSel.value,
+        t: performance.now()
       });
       detectMiracle();
+      saveState();
       selected = hit;
     }
-  });
+  }
+
+  if (!isMobile) {
+    cv.addEventListener("mousemove", e => {
+      const mx = e.clientX, my = e.clientY;
+      let best = null, bestD = Infinity;
+      for (let n of nodes) {
+        const dx = n.sx - mx;
+        const dy = n.sy - my;
+        const d = dx*dx + dy*dy;
+        if (d < 260 && d < bestD) {
+          bestD = d;
+          best = n;
+        }
+      }
+      hover = best;
+
+      if (isDragging) {
+        offsetX = dragOriginX + (e.clientX - dragStartX) / zoom;
+        offsetY = dragOriginY + (e.clientY - dragStartY) / zoom;
+      }
+    });
+
+    cv.addEventListener("mousedown", e => {
+      if (e.button === 1 || e.button === 2) {
+        isDragging = true;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        dragOriginX = offsetX;
+        dragOriginY = offsetY;
+        e.preventDefault();
+      }
+    });
+
+    cv.addEventListener("mouseup", () => { isDragging = false; });
+    cv.addEventListener("contextmenu", e => e.preventDefault());
+
+    cv.addEventListener("wheel", e => {
+      e.preventDefault();
+      const factor = Math.exp(-e.deltaY * 0.001);
+      targetZoom = Math.max(0.5, Math.min(4, targetZoom * factor));
+    }, { passive: false });
+
+    cv.addEventListener("click", e => {
+      if (e.button !== 0) return;
+      handlePointSelection(e.clientX, e.clientY, 18);
+    });
+  } else {
+    cv.addEventListener("touchstart", e => {
+      if (!e.touches || e.touches.length === 0) return;
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        isDragging = true;
+        dragStartX = t.clientX;
+        dragStartY = t.clientY;
+        dragOriginX = offsetX;
+        dragOriginY = offsetY;
+        touchTapInfo = {
+          startX: t.clientX,
+          startY: t.clientY,
+          lastX: t.clientX,
+          lastY: t.clientY,
+          time: performance.now(),
+          moved: false
+        };
+      } else if (e.touches.length === 2) {
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        const dx = t0.clientX - t1.clientX;
+        const dy = t0.clientY - t1.clientY;
+        touchStartDist = Math.hypot(dx, dy) || 1;
+        touchStartZoom = targetZoom;
+        lastTouchCenter = {
+          x: (t0.clientX + t1.clientX) / 2,
+          y: (t0.clientY + t1.clientY) / 2
+        };
+        isDragging = false;
+        touchTapInfo = null;
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    cv.addEventListener("touchmove", e => {
+      if (!e.touches || e.touches.length === 0) return;
+      if (e.touches.length === 1 && isDragging && touchTapInfo) {
+        const t = e.touches[0];
+        const dx = t.clientX - dragStartX;
+        const dy = t.clientY - dragStartY;
+        offsetX = dragOriginX + dx / zoom;
+        offsetY = dragOriginY + dy / zoom;
+        touchTapInfo.lastX = t.clientX;
+        touchTapInfo.lastY = t.clientY;
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+          touchTapInfo.moved = true;
+        }
+      } else if (e.touches.length === 2) {
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        const dx = t0.clientX - t1.clientX;
+        const dy = t0.clientY - t1.clientY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const factor = dist / touchStartDist;
+        targetZoom = Math.max(0.5, Math.min(4, touchStartZoom * factor));
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    cv.addEventListener("touchend", e => {
+      // 识别轻触为一次“点选”
+      if (touchTapInfo && (!e.touches || e.touches.length === 0)) {
+        const dt = performance.now() - touchTapInfo.time;
+        if (dt < 300 && !touchTapInfo.moved) {
+          const mx = touchTapInfo.lastX ?? touchTapInfo.startX;
+          const my = touchTapInfo.lastY ?? touchTapInfo.startY;
+          handlePointSelection(mx, my, 45);
+        }
+      }
+      touchTapInfo = null;
+      isDragging = false;
+      e.preventDefault();
+    }, { passive: false });
+  }
 
   rotateSpeedInput.oninput = ()=>{
     rotateSpeed = parseFloat(rotateSpeedInput.value)||0;
+    saveState();
   };
+
+  // 颜色与特效改变也保存
+  colorA.addEventListener("input", saveState);
+  colorB.addEventListener("input", saveState);
+  effectSel.addEventListener("change", saveState);
 
   btnReseed.onclick = ()=>{
     seed = Math.random()*1e9;
     createUniverse(+density.value);
+    saveState();
   };
-  btnClear.onclick = ()=>{ userLinks = []; };
-  density.oninput = ()=>{ createUniverse(+density.value); };
+  btnClear.onclick = ()=>{
+    userLinks = [];
+    saveState();
+  };
+  density.oninput = ()=>{
+    createUniverse(+density.value);
+    saveState();
+  };
   btnView.onclick = ()=>{
     if (mode==="personal"){
       mode="dao";
@@ -629,6 +855,7 @@ canvas{position:fixed;left:0;top:0;}
       mode="personal";
       btnView.textContent="切换到：天道视角";
     }
+    saveState();
   };
 
   // ===== 主循环 =====
@@ -644,11 +871,11 @@ canvas{position:fixed;left:0;top:0;}
 
     // 旋转（速度可控）
     rotationY += 0.015*rotateSpeed*dt;
-    rotationX = 0.25 + Math.sin(now*0.0004)*0.2*(rotateSpeed>0?1:0.2);
 
-    updateNodes();
     drawBackground();
-    drawLinks();
+    updateNodes();
+    drawBaseStructure();
+    drawUserLinks();
     drawNodes();
     if (mode==="dao") drawDaoGuide();
     drawFatePattern();
@@ -658,7 +885,22 @@ canvas{position:fixed;left:0;top:0;}
     requestAnimationFrame(loop);
   }
 
+  loadState();
   createUniverse(+density.value);
+
+  if (loadedState && Array.isArray(loadedState.userLinks)) {
+    userLinks = loadedState.userLinks.map(l => ({
+      a: l.a,
+      b: l.b,
+      color: l.color || (Math.random() < 0.5 ? colorA.value : colorB.value),
+      effect: l.effect || "normal",
+      t: performance.now()
+    }));
+  }
+
+  // 初始化时同步保存一次
+  saveState();
+
   loop();
 
   window.addEventListener("resize", ()=>{
